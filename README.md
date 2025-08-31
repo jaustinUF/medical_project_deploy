@@ -107,7 +107,6 @@ medical_project_deploy/
 ---
 
 ## 🖼️ Architecture diagram
-
 ```mermaid
 flowchart TD
     U[User Query] --> F[frontend.py (NiceGUI)]
