@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "rxnorm": {
+  "command": "python",
+  "args": ["tools/rxnorm_server.py"]
+    }
+  }
+}
