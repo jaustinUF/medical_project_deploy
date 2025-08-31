@@ -82,6 +82,7 @@ if __name__ in {"__main__", "__mp_main__"}:
     port = os.environ.get("PORT")
     if port:
         # Railway / any PaaS sets PORT
+        print(f"Starting NiceGUI on 0.0.0.0:{port} (Railway)")  # will show in Deploy Logs
         ui.run(host="0.0.0.0", port=int(port), reload=False)
     else:
         # Local dev (requires pywebview installed)
