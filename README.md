@@ -126,7 +126,6 @@ flowchart TD;
     B --> F;
     F --> U;
 
-
 This shows the full flow:
 - User interacts with **NiceGUI frontend**
 - Queries are passed to the **MCP host backend**
