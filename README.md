@@ -109,23 +109,23 @@ medical_project_deploy/
 ## 🖼️ Architecture diagram
 
 ```mermaid
-flowchart TD;
-    U[User Query];
-    F[frontend.py<br/>(NiceGUI)];
-    B[backend.py<br/>(MCP host + chatbot bridge)];
-    R[tools/rxnorm_server.py<br/>(FastMCP)];
-    X[(RxNorm API)];
-    A[Anthropic API<br/>(Claude model)];
+flowchart TD
+    U["User Query"]
+    F["frontend.py\n(NiceGUI)"]
+    B["backend.py\n(MCP host + chatbot bridge)"]
+    R["tools/rxnorm_server.py\n(FastMCP)"]
+    X["RxNorm API"]
+    A["Anthropic API\n(Claude model)"]
 
-    U --> F;
-    F --> B;
-    B -- Stdio transport --> R;
-    R -- HTTP requests --> X;
-    B --> A;
-    A --> B;
-    R --> B;
-    B --> F;
-    F --> U;
+    U --> F
+    F --> B
+    B -- "Stdio transport" --> R
+    R -- "HTTP requests" --> X
+    B --> A
+    A --> B
+    R --> B
+    B --> F
+    F --> U
 
 ```
 
