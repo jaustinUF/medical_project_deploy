@@ -74,7 +74,7 @@ def index():
     with ui.column().classes('w-full max-w-4xl mx-auto'):
         # Header with status
         with ui.row().classes('items-center gap-3'):
-            ui.label('Medical Finder').classes('text-2xl font-bold')
+            ui.label('Drug Finder').classes('text-2xl font-bold')
             status_dot = ui.icon('circle').classes('text-gray-400')
             status_text = ui.label('Loading tools...').classes('text-gray-600')
 
