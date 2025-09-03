@@ -2,6 +2,7 @@ import os
 import threading
 import asyncio
 from queue import Queue
+from typing import Dict, Optional
 
 from nicegui import ui, app
 from fastapi import Response
@@ -28,13 +29,33 @@ worker = threading.Thread(
 worker.start()
 
 # ---------------------------
+# Per-client timer registry (to cancel on disconnect)
+# ---------------------------
+timers_by_client: Dict[str, Optional[ui.timer]] = {}
+
+def _cancel_timer_for(client_id: str) -> None:
+    t = timers_by_client.get(client_id)
+    if t is not None:
+        try:
+            t.cancel()
+        except Exception:
+            pass
+    timers_by_client[client_id] = None
+
+# Cancel timers when a client disconnects (avoids KeyError races)
+def _on_disconnect(client):
+    # client has .id
+    _cancel_timer_for(client.id)
+
+app.on_disconnect(_on_disconnect)
+
+# ---------------------------
 # Healthcheck endpoint
 # ---------------------------
 @ui.page('/health')
 def healthcheck():
     # Fast, lightweight liveness check for Railway and manual curl
     return Response(content='OK', media_type='text/plain')
-
 
 # ---------------------------
 # Main page (per-client UI)
@@ -43,17 +64,17 @@ def healthcheck():
 def index():
     """A fresh UI for each browser client (prevents cross-user leakage)."""
     is_paas = bool(os.environ.get('PORT'))  # True on Railway (or other PaaS)
+    client = ui.context.client              # current client object (has .id)
 
     # Page container so children can expand to full width
     with ui.column().classes('w-full max-w-4xl mx-auto'):
         # Header with status
         with ui.row().classes('items-center gap-3'):
-            ui.label('Drug Finder').classes('text-2xl font-bold')
+            ui.label('Medical Finder').classes('text-2xl font-bold')
             status_dot = ui.icon('circle').classes('text-gray-400')
             status_text = ui.label('Loading tools...').classes('text-gray-600')
 
         # WIDE input: make it fill the available width like the output
-        # (w-full makes it responsive; also give a long placeholder to visualize width)
         query_box = ui.input(
             label='Query',
             placeholder='Enter your query…'
@@ -107,39 +128,21 @@ def index():
         # ---------------------------
         # Status updater: tools loaded?
         # ---------------------------
-        # CANCEL THE TIMER on ready and on disconnect to avoid
-        # "KeyError: Client.instances[...]"
-        t = {'timer': None}  # small mutable holder so inner funcs can access
-
+        # We keep a per-client polling timer and cancel it when tools are ready
+        # and again on disconnect (via app.on_disconnect above).
         def update_status():
             ready = len(getattr(chatbot, 'available_tools', [])) > 0
             if ready:
                 status_dot.classes(replace='text-green-500')
                 status_text.set_text(f'Tools ready ({len(chatbot.available_tools)})')
-                try:
-                    if t['timer'] is not None:
-                        t['timer'].cancel()  # stop polling once ready
-                        t['timer'] = None
-                except Exception:
-                    pass
+                # cancel this client's timer once ready
+                _cancel_timer_for(client.id)
             else:
                 status_dot.classes(replace='text-gray-400')
                 status_text.set_text('Loading tools...')
 
-        # Start polling every 0.5s; store handle for cancellation
-        t['timer'] = ui.timer(0.5, update_status)
-
-        # Ensure the timer is cancelled when the user closes the page/tab
-        def _on_disconnect():
-            try:
-                if t['timer'] is not None:
-                    t['timer'].cancel()
-                    t['timer'] = None
-            except Exception:
-                pass
-
-        ui.on_disconnect(_on_disconnect)
-
+        # Start polling every 0.5s; store handle per client
+        timers_by_client[client.id] = ui.timer(0.5, update_status)
 
 # ---------------------------
 # Run mode
