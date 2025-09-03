@@ -29,7 +29,7 @@ worker = threading.Thread(
 worker.start()
 
 # ---------------------------
-# Per-client timer registry (to cancel on disconnect)
+# Per-client timer registry (to cancel on disconnect to avoid KeyError)
 # ---------------------------
 timers_by_client: Dict[str, Optional[ui.timer]] = {}
 
@@ -51,6 +51,8 @@ app.on_disconnect(_on_disconnect)
 
 # ---------------------------
 # Healthcheck endpoint
+# check if app is up on Railway
+#   call url in browser: https://medicalprojectdeploy-production.up.railway.app/health
 # ---------------------------
 @ui.page('/health')
 def healthcheck():
@@ -58,7 +60,9 @@ def healthcheck():
     return Response(content='OK', media_type='text/plain')
 
 # ---------------------------
-# Main page (per-client UI)
+# Main page
+# per-client UI: function is executed fresh for every new browser session
+#   - isolates user data
 # ---------------------------
 @ui.page('/')
 def index():
@@ -109,7 +113,7 @@ def index():
             on_click=ask_query
         ).classes('mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700')
 
-        # Local-only Quit button (hidden on Railway)
+        # Quit button; Local-only hidden on Railway
         def shutdown_app():
             in_q.put("quit")
             try:
@@ -127,8 +131,10 @@ def index():
 
         # ---------------------------
         # Status updater: tools loaded?
+        #   - manages 'loading' dot and tool count
+        #   - prevents KeyError on Railway
         # ---------------------------
-        # We keep a per-client polling timer and cancel it when tools are ready
+        # Keep a per-client polling timer and cancel it when tools are ready
         # and again on disconnect (via app.on_disconnect above).
         def update_status():
             ready = len(getattr(chatbot, 'available_tools', [])) > 0
@@ -146,6 +152,7 @@ def index():
 
 # ---------------------------
 # Run mode
+#   - detects and sets-up for local or Railway execution
 # ---------------------------
 if __name__ in {"__main__", "__mp_main__"}:
     port = os.environ.get("PORT")
