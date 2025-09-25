@@ -1,7 +1,7 @@
 # 🩺 med_find – Medical Finder (MCP + NiceGUI)
 
 This project is a demo of an **MCP-enabled chatbot** that can query the **RxNorm drug database** through an MCP server, with a **NiceGUI frontend**.  
-It supports **local desktop testing** (using NiceGUI’s native window) and **deployment to Railway** (web server mode).
+It supports **local desktop testing** (using NiceGUI’s native window) and **deployment to Railway** (web server mode). It is available online at https://medicalprojectdeploy-production.up.railway.app/
 
 ---
 
